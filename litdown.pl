@@ -18,6 +18,9 @@ my ($name, $path, $suffix) = fileparse($input_file, qr/\.[^.]*/);
 my $extension = $suffix;
 $extension =~ s/^\.//;  # Remove the leading dot
 
+my $trimmed_prefix = $prefix;
+$trimmed_prefix =~ s/\s+$//;  # Remove trailing whitespace
+
 # Read the input file
 open(my $fh, '<', $input_file) or die "Could not open file '$input_file' $!";
 
@@ -27,7 +30,7 @@ my @code_block_lines;
 
 while (my $line = <$fh>) {
     chomp $line;
-    if ($line =~ /^\Q$prefix\E(.*)/) {
+    if ($line =~ /^\Q$prefix\E(.*)/ or $line =~ /^\Q$trimmed_prefix\E$/) {
         # Line is a markdown comment
         # Close code block if we were in one
         if ($in_code_block) {
@@ -41,7 +44,7 @@ while (my $line = <$fh>) {
             @code_block_lines = ();
             $in_code_block = 0;
         }
-        my $markdown_line = $1;
+        my $markdown_line = defined($1) ? $1 : '';
         push @output_lines, $markdown_line;
     } else {
         # Line is code
